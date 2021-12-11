@@ -1,110 +1,110 @@
-import { Coordinates } from './../models/coordinates';
+import { Coordinates } from '../models/coordinates';
 import { Envio } from '../models/envio';
 import { Injectable } from '@nestjs/common';
-import { Protocol } from 'src/models/protocols';
-import { Scan } from './../models/scan';
-import { TypeEnemies } from './../models/typeEnemies';
+import { Protocol } from '../models/protocols';
+import { Scan } from '../models/scan';
+import { TypeEnemies } from '../models/typeEnemies';
 
 @Injectable()
 export class RadarService {
   private location: Coordinates = new Coordinates();
+  private scanSelected: Scan = new Scan();
+  private scansSelected: Scan[] = [];
 
   async calculate(envio: Envio): Promise<Coordinates> {
     let coords = new Coordinates();
-    const scanSelected = this.selectScan(envio);
-    coords = (await scanSelected).coordinates;
-    //this.location = coords;
+    this.scanSelected = await this.selectScan(envio);
+    coords = this.scanSelected.coordinates;
     return coords;
   }
   async selectScan(envio: Envio): Promise<Scan> {
-    let scanSelected: Scan = new Scan();
-    const scansSelected = [];
     let scans = envio.scan;
-    let distance = 0;
-    console.log('scans: ', scans);
     const protocolSelected = envio.protocols;
     if (protocolSelected.includes(Protocol.avoidCrossfire)) {
-      for (let i = 0; i < scans.length; i++) {
-        if (scans[i].allies > 0) {
-          scans.splice(i, 1);
-          i--;
-        }
-      }
-      scanSelected = scans[0];
-      console.log('Elimino allies');
-    } else if (protocolSelected.includes(Protocol.avoidMech)) {
-      for (let i = 0; i < scans.length; i++) {
-        if (scans[i].enemies.type === TypeEnemies.mech) {
-          scans.splice(i, 1);
-          i--;
-        }
-      }
-      scanSelected = scans[0];
-      console.log('Elimino mechs');
-    } else if (protocolSelected.includes(Protocol.prioritizeMech)){
-      for (let i = 0; i < scans.length; i++) {
-        if (scans[i].enemies.type === TypeEnemies.mech) {
-          scansSelected.push(scans[i]);
-        }
-      }
-      if (scansSelected.length > 0) {
-        scans = scansSelected;
-      }
-      scanSelected = scans[0];
-      console.log('Hay mechs');
+      await this.loop(Protocol.avoidCrossfire, scans);
+      this.scanSelected = scans[0];
     }
-    for (const p of protocolSelected) {
-      console.log(p);
-      switch (p) {
-        case 'assist-allies':
-          for (let i = 0; i < scans.length; i++) {
-            if (scans[i].allies > 0) {
-              scansSelected.push(scans[i]);
-            }
-          }
-          if (scansSelected.length > 0) {
-            scans = scansSelected;
-            scanSelected = scans[0];
-          }
-          break;
-        case 'closest-enemies':
-          distance = 100;
-          for (let i = 0; i < scans.length; i++) {
-            const distanceFinal = await this.distance(scans[i].coordinates);
-            if (distanceFinal <= distance) {
-              distance = distanceFinal;
-              scanSelected = scans[i];
-            }
-          }
-          break;
-        case 'furthest-enemies':
-          distance = await this.distance(this.location);
-          for (let i = 0; i < scans.length; i++) {
-            const distanceFinal = await this.distance(scans[i].coordinates);
-            if (distanceFinal > distance && distanceFinal < 100) {
-              distance = distanceFinal;
-              scanSelected = scans[i];
-            }
-          }
-          break;
+    if (protocolSelected.includes(Protocol.avoidMech)) {
+      await this.loop(Protocol.avoidMech, scans);
+      this.scanSelected = scans[0];
+    }
+    if (protocolSelected.includes(Protocol.prioritizeMech)) {
+      await this.loop(Protocol.prioritizeMech, scans);
+      if (this.scansSelected.length > 0) {
+        scans = this.scansSelected;
+      }
+      this.scanSelected = scans[0];
+    }
+    if (protocolSelected.includes(Protocol.assistAllies)) {
+      await this.loop(Protocol.assistAllies, scans);
+      if (this.scansSelected.length > 0) {
+        scans = this.scansSelected;
+        this.scanSelected = scans[0];
       }
     }
-    console.log('scanSelected: ', scanSelected);
-    return scanSelected;
+    if (protocolSelected.includes(Protocol.closestEnemies)) {
+      await this.loop(Protocol.closestEnemies, scans);
+    }
+    if (protocolSelected.includes(Protocol.furthestEnemies)) {
+      this.loop(Protocol.furthestEnemies, scans);
+    }
+    return this.scanSelected;
   }
 
-  async distance(coords: Coordinates): Promise<number> {
+  distance(coords: Coordinates): number {
     const distance = Math.sqrt(
       (coords.x - this.location.x) ** 2 + (coords.y - this.location.y) ** 2,
     );
-    console.log(
-      'location: ',
-      this.location,
-      'coords: ',
-      coords,
-      'distancia: ',
-      distance,
-    );
     return distance;
+  }
+
+  async loop(protocol: Protocol, scans: Scan[]) {
+    let distanceClose = 100;
+    let distanceFurther = 0;
+    for (let i = 0; i < scans.length; i++) {
+      if (
+        protocol === Protocol.avoidCrossfire ||
+        protocol === Protocol.assistAllies
+      ) {
+        if (scans[i].allies > 0) {
+          if (protocol === Protocol.avoidCrossfire) {
+            scans.splice(i, 1);
+            i--;
+          } else {
+            this.scansSelected.push(scans[i]);
+          }
+        }
+      }
+      if (
+        protocol === Protocol.avoidMech ||
+        protocol === Protocol.prioritizeMech
+      ) {
+        if (scans[i].enemies.type === TypeEnemies.mech) {
+          if (protocol === Protocol.avoidMech) {
+            scans.splice(i, 1);
+            i--;
+          } else {
+            this.scansSelected.push(scans[i]);
+          }
+        }
+      }
+      if (
+        protocol === Protocol.closestEnemies ||
+        protocol === Protocol.furthestEnemies
+      ) {
+        const distanceFinal = this.distance(scans[i].coordinates);
+        if (protocol === Protocol.closestEnemies) {
+          if (distanceFinal <= distanceClose) {
+            distanceClose = distanceFinal;
+            this.scanSelected = scans[i];
+          }
+        } else {
+          if (distanceFinal > distanceFurther && distanceFinal <= 100) {
+            distanceFurther = distanceFinal;
+            this.scanSelected = scans[i];
+          }
+        }
+      }
+    }
   }
 }
