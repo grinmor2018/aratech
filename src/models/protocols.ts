@@ -4,5 +4,5 @@ export enum Protocol {
   assistAllies = 'assist-allies',
   avoidCrossfire = 'avoid-crossfire',
   prioritizeMech = 'prioritize-mech',
-  avoidMech = 'avoid-mech '
+  avoidMech = 'avoid-mech'
 }

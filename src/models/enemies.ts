@@ -1,6 +1,6 @@
 import { TypeEnemies } from './typeEnemies';
 
 export class Enemies {
-  typeEnemy: TypeEnemies = TypeEnemies.soldier;
-  numberEnemies: number;
+  type: TypeEnemies = TypeEnemies.soldier;
+  number: number;
 }

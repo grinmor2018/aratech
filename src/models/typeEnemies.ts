@@ -1,4 +1,4 @@
 export enum TypeEnemies {
-  soldier = 'Soldier',
-  mech = 'Mech'
+  soldier = 'soldier',
+  mech = 'mech'
 }
