@@ -45,7 +45,7 @@ export class RadarService {
       await this.loop(Protocol.closestEnemies, scans);
     }
     if (protocolSelected.includes(Protocol.furthestEnemies)) {
-      this.loop(Protocol.furthestEnemies, scans);
+      await this.loop(Protocol.furthestEnemies, scans);
     }
     return this.scanSelected;
   }
