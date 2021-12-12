@@ -50,7 +50,7 @@ export class RadarService {
     return this.scanSelected;
   }
 
-  distance(coords: Coordinates): number {
+  async distance(coords: Coordinates): Promise<number> {
     const distance = Math.sqrt(
       (coords.x - this.location.x) ** 2 + (coords.y - this.location.y) ** 2,
     );
@@ -91,7 +91,7 @@ export class RadarService {
         protocol === Protocol.closestEnemies ||
         protocol === Protocol.furthestEnemies
       ) {
-        const distanceFinal = this.distance(scans[i].coordinates);
+        const distanceFinal = await this.distance(scans[i].coordinates);
         if (protocol === Protocol.closestEnemies) {
           if (distanceFinal <= distanceClose) {
             distanceClose = distanceFinal;
