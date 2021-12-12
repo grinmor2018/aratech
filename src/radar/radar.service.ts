@@ -12,9 +12,8 @@ export class RadarService {
   private scansSelected: Scan[] = [];
 
   async calculate(envio: Envio): Promise<Coordinates> {
-    let coords = new Coordinates();
-    this.scanSelected = await this.selectScan(envio);
-    coords = this.scanSelected.coordinates;
+    this.scansSelected = [];
+    const coords = (await this.selectScan(envio)).coordinates;
     return coords;
   }
   async selectScan(envio: Envio): Promise<Scan> {
