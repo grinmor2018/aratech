@@ -18,7 +18,7 @@ export class RadarService {
 
   async distanceMeasure(coords: Coordinates): Promise<number> {
     const distance = Math.sqrt(
-      (coords.x - this.location.x) ** 2 + (coords.y - this.location.y) ** 2 
+      (coords.x - this.location.x) ** 2 + (coords.y - this.location.y) ** 2
     );
     return distance;
   }
