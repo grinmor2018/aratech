@@ -21,24 +21,24 @@ export class RadarService {
     const protocolSelected = envio.protocols;
     if (protocolSelected.includes(Protocol.avoidCrossfire)) {
       await this.loop(Protocol.avoidCrossfire, scans);
-      this.scanSelected = scans[0];
+      //this.scanSelected = scans[0];
     }
     if (protocolSelected.includes(Protocol.avoidMech)) {
       await this.loop(Protocol.avoidMech, scans);
-      this.scanSelected = scans[0];
+      //this.scanSelected = scans[0];
     }
     if (protocolSelected.includes(Protocol.prioritizeMech)) {
       await this.loop(Protocol.prioritizeMech, scans);
       if (this.scansSelected.length > 0) {
         scans = this.scansSelected;
       }
-      this.scanSelected = scans[0];
+      //this.scanSelected = scans[0];
     }
     if (protocolSelected.includes(Protocol.assistAllies)) {
       await this.loop(Protocol.assistAllies, scans);
       if (this.scansSelected.length > 0) {
         scans = this.scansSelected;
-        this.scanSelected = scans[0];
+        //this.scanSelected = scans[0];
       }
     }
     if (protocolSelected.includes(Protocol.closestEnemies)) {
@@ -72,6 +72,7 @@ export class RadarService {
           } else {
             this.scansSelected.push(scans[i]);
           }
+          this.scanSelected = scans[0];
         }
       }
       if (
@@ -85,6 +86,7 @@ export class RadarService {
           } else {
             this.scansSelected.push(scans[i]);
           }
+          this.scanSelected = scans[0];
         }
       }
       if (
