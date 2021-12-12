@@ -9,7 +9,7 @@ export class RadarController {
   constructor(private radarService: RadarService) {}
 
   @Post()
-  async move(@Body() envio: Envio) {
+  async move(@Body() envio: Envio): Promise<Coordinates> {
     const coords = this.radarService.calculate(envio);
     return coords;
   }

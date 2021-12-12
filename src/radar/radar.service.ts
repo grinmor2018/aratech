@@ -12,48 +12,13 @@ export class RadarService {
   private scansSelected: Scan[] = [];
 
   async calculate(envio: Envio): Promise<Coordinates> {
-    let coords = new Coordinates();
-    this.scanSelected = await this.selectScan(envio);
-    coords = this.scanSelected.coordinates;
+    const coords = (await this.selectScan(envio)).coordinates;
     return coords;
   }
-  async selectScan(envio: Envio): Promise<Scan> {
-    let scans = envio.scan;
-    const protocolSelected = envio.protocols;
-    if (protocolSelected.includes(Protocol.avoidCrossfire)) {
-      await this.loop(Protocol.avoidCrossfire, scans);
-      this.scanSelected = scans[0];
-    }
-    if (protocolSelected.includes(Protocol.avoidMech)) {
-      await this.loop(Protocol.avoidMech, scans);
-      this.scanSelected = scans[0];
-    }
-    if (protocolSelected.includes(Protocol.prioritizeMech)) {
-      await this.loop(Protocol.prioritizeMech, scans);
-      if (this.scansSelected.length > 0) {
-        scans = this.scansSelected;
-      }
-      this.scanSelected = scans[0];
-    }
-    if (protocolSelected.includes(Protocol.assistAllies)) {
-      await this.loop(Protocol.assistAllies, scans);
-      if (this.scansSelected.length > 0) {
-        scans = this.scansSelected;
-        this.scanSelected = scans[0];
-      }
-    }
-    if (protocolSelected.includes(Protocol.closestEnemies)) {
-      await this.loop(Protocol.closestEnemies, scans);
-    }
-    if (protocolSelected.includes(Protocol.furthestEnemies)) {
-      this.loop(Protocol.furthestEnemies, scans);
-    }
-    return this.scanSelected;
-  }
 
-  distance(coords: Coordinates): number {
+  async distanceMeasure(coords: Coordinates): Promise<number> {
     const distance = Math.sqrt(
-      (coords.x - this.location.x) ** 2 + (coords.y - this.location.y) ** 2,
+      (coords.x - this.location.x) ** 2 + (coords.y - this.location.y) ** 2 
     );
     return distance;
   }
@@ -92,7 +57,7 @@ export class RadarService {
         protocol === Protocol.closestEnemies ||
         protocol === Protocol.furthestEnemies
       ) {
-        const distanceFinal = this.distance(scans[i].coordinates);
+        const distanceFinal = await this.distanceMeasure(scans[i].coordinates);
         if (protocol === Protocol.closestEnemies) {
           if (distanceFinal <= distanceClose) {
             distanceClose = distanceFinal;
@@ -106,5 +71,39 @@ export class RadarService {
         }
       }
     }
+  }
+
+  async selectScan(envio: Envio): Promise<Scan> {
+    let scans = envio.scan;
+    const protocolSelected = envio.protocols;
+    if (protocolSelected.includes(Protocol.avoidCrossfire)) {
+      await this.loop(Protocol.avoidCrossfire, scans);
+      this.scanSelected = scans[0];
+    }
+    if (protocolSelected.includes(Protocol.avoidMech)) {
+      await this.loop(Protocol.avoidMech, scans);
+      this.scanSelected = scans[0];
+    }
+    if (protocolSelected.includes(Protocol.prioritizeMech)) {
+      await this.loop(Protocol.prioritizeMech, scans);
+      if (this.scansSelected.length > 0) {
+        scans = this.scansSelected;
+      }
+      this.scanSelected = scans[0];
+    }
+    if (protocolSelected.includes(Protocol.assistAllies)) {
+      await this.loop(Protocol.assistAllies, scans);
+      if (this.scansSelected.length > 0) {
+        scans = this.scansSelected;
+        this.scanSelected = scans[0];
+      }
+    }
+    if (protocolSelected.includes(Protocol.closestEnemies)) {
+      await this.loop(Protocol.closestEnemies, scans);
+    }
+    if (protocolSelected.includes(Protocol.furthestEnemies)) {
+      this.loop(Protocol.furthestEnemies, scans);
+    }
+    return this.scanSelected;
   }
 }
